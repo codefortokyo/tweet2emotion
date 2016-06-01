@@ -18,6 +18,7 @@ logger = None
 define("port", default=8000, type=int)
 
 import tweet2emotion
+import text_analytics
 
 def logger_setting():
     global logger
@@ -26,8 +27,9 @@ def logger_setting():
     logger = logging.getLogger('server')
     return logger
 
-class MainHandler(tornado.web.RequestHandler):
+class JapaneseHandler(tornado.web.RequestHandler):
     def get(self):
+        lang  = self.get_argument('lang', "ja")
         tweet = self.get_argument('text', "")
 
         # URLdecode & UTf-8
@@ -42,7 +44,7 @@ class MainHandler(tornado.web.RequestHandler):
         else:
             ratio = 0.0
 
-        logging.debug('emotion=%f:tweet=%s' % (ratio, tweet))
+        logging.debug('emotion=%f:lang=%s:tweet=%s' % (ratio, lang, tweet))
 
         response = {
             #'tweet' : tweet,
@@ -52,13 +54,65 @@ class MainHandler(tornado.web.RequestHandler):
         self.set_header('content-type', 'application/json; charset=UTF-8')
         self.write(response)
 
-    def post(self):
-        self.write('POST - Hello, world')
+    #def post(self):
+    #    self.write('POST - Hello, world')
+
+class EnglishHandler(tornado.web.RequestHandler):
+    def get(self):
+        lang  = self.get_argument('lang', "en")
+        tweet = self.get_argument('text', "")
+
+        # URLdecode & UTf-8
+        tweet = tweet.encode('utf-8')
+
+        length = len(tweet)
+        if length > 0:
+            ratio = text_analytics.get_emotion(lang, tweet)
+        else:
+            ratio = 0.0
+
+        logging.debug('emotion=%f:lang=%s:tweet=%s' % (ratio, lang, tweet))
+
+        response = {
+            #'tweet' : tweet,
+            'emotion' : ratio,
+            #'lang' : 'ja'
+        }
+        self.set_header('content-type', 'application/json; charset=UTF-8')
+        self.write(response)
+
+class SpanishHandler(tornado.web.RequestHandler):
+    def get(self):
+        lang  = self.get_argument('lang', "es")
+        tweet = self.get_argument('text', "")
+
+        # URLdecode & UTf-8
+        tweet = tweet.encode('utf-8')
+
+        length = len(tweet)
+        if length > 0:
+            ratio = text_analytics.get_emotion(lang, tweet)
+        else:
+            ratio = 0.0
+
+        logging.debug('emotion=%f:lang=%s:tweet=%s' % (ratio, lang, tweet))
+
+        response = {
+            #'tweet' : tweet,
+            'emotion' : ratio,
+            #'lang' : 'ja'
+        }
+        self.set_header('content-type', 'application/json; charset=UTF-8')
+        self.write(response)
+
 
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
-            (r"/?", MainHandler)
+            (r"/?", JapaneseHandler),
+            (r"/ja/?", JapaneseHandler),
+            (r"/en/?", EnglishHandler),
+            (r"/es/?", SpanishHandler),
         ]
         tornado.web.Application.__init__(self, handlers)
 
